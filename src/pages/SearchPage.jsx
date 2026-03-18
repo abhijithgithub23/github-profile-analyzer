@@ -6,7 +6,7 @@ import { githubAPI } from '../features/github/githubAPI';
 
 export default function SearchPage() {
   const [localQuery, setLocalQuery] = useState('');
-  const [isExactChecking, setIsExactChecking] = useState(false);
+  const [fallbackLoading, setFallbackLoading] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { suggestions, loading, error, rateLimitExceeded } = useSelector(state => state.search);
@@ -16,76 +16,76 @@ export default function SearchPage() {
     if (!localQuery.trim()) return;
 
     dispatch(clearSearch());
-    setIsExactChecking(true);
 
-    try {
-      // 1. Try exact match first
-      const exactMatch = await githubAPI.getUser(localQuery);
-      if (exactMatch.status === 200) {
-        navigate(`/user/${localQuery}`);
-        return;
+    if (rateLimitExceeded) {
+      // Fallback: If rate limited, bypass search API and try exact match directly
+      setFallbackLoading(true);
+      try {
+        const exactMatch = await githubAPI.getUser(localQuery);
+        if (exactMatch.status === 200) navigate(`/user/${localQuery}`);
+      } catch (err) {
+        console.log("Error:", err);
+        alert("Search limit reached and exact user not found.");
+      } finally {
+        setFallbackLoading(false);
       }
-    } catch (err) {
-        console.log("Error: ", err);
-      // 2. Exact match failed. If we aren't rate limited, search similar users.
-      if (!rateLimitExceeded) {
-        dispatch(searchUsersThunk(localQuery));
-      }
-    } finally {
-      setIsExactChecking(false);
+    } else {
+      // Normal Flow: Get list of matches
+      dispatch(searchUsersThunk(localQuery));
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto mt-20 px-4">
+    <div className="max-w-4xl mx-auto mt-16 px-4">
       <div className="text-center mb-10">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Find GitHub Developers</h1>
-        <p className="text-gray-600">Analyze repositories, activity, and languages.</p>
+        <h1 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">
+          GitHub Developer <span className="text-blue-600">Analyzer</span>
+        </h1>
+        <p className="text-gray-500 text-lg">Uncover deep insights, commit habits, and developer personas.</p>
       </div>
 
-      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
+      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 max-w-2xl mx-auto">
         <input
           type="text"
           value={localQuery}
           onChange={(e) => setLocalQuery(e.target.value)}
-          placeholder="Enter a GitHub username..."
-          className="flex-1 px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Search for an account (e.g., 'facebook', 'torvalds')..."
+          className="flex-1 px-5 py-4 rounded-xl border border-gray-300 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
         />
         <button 
           type="submit"
-          disabled={loading || isExactChecking}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50"
+          disabled={loading || fallbackLoading}
+          className="px-8 py-4 bg-gray-900 text-white rounded-xl font-bold hover:bg-gray-800 disabled:opacity-50 transition shadow-sm"
         >
-          {isExactChecking || loading ? 'Searching...' : 'Search'}
+          {loading || fallbackLoading ? 'Analyzing...' : 'Analyze'}
         </button>
       </form>
 
       {error && (
-        <div className="mt-6 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
+        <div className="mt-6 max-w-2xl mx-auto p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 text-center font-medium">
           {error}
         </div>
       )}
 
       {suggestions.length > 0 && (
-        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <h3 className="px-4 py-3 bg-gray-50 border-b border-gray-200 font-medium text-gray-700">Similar Users</h3>
-          <ul className="divide-y divide-gray-200">
+        <div className="mt-12">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Matching Accounts</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {suggestions.map(user => (
-              <li 
+              <div 
                 key={user.id} 
                 onClick={() => navigate(`/user/${user.login}`)}
-                className="p-4 flex items-center gap-4 hover:bg-gray-50 cursor-pointer transition"
+                className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-400 cursor-pointer flex items-center gap-4 transition group"
               >
-                <img src={user.avatar_url} alt={user.login} className="w-10 h-10 rounded-full" />
-                <span className="font-medium text-gray-900">{user.login}</span>
-              </li>
+                <img src={user.avatar_url} alt={user.login} className="w-14 h-14 rounded-full border border-gray-100" />
+                <div className="overflow-hidden">
+                  <h4 className="font-bold text-gray-900 group-hover:text-blue-600 truncate">{user.login}</h4>
+                  <p className="text-xs text-gray-500">View Analytics →</p>
+                </div>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
-      )}
-      
-      {!loading && suggestions.length === 0 && localQuery && !error && !isExactChecking && (
-         <div className="mt-6 text-center text-gray-500">No users found.</div>
       )}
     </div>
   );
