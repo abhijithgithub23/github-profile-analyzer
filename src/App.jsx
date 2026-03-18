@@ -1,15 +1,23 @@
-
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navbar from './components/shared/Navbar';
+import SearchPage from './pages/SearchPage';
+import UserPage from './pages/UserPage';
+import StarredPage from './pages/StarredPage';
 
 function App() {
-
   return (
-    <>
-      <h1 className="text-500xl mt-9 font-bold text-blue-500">
-        Tailwind Working
-      </h1>
-    </>
-  )
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<SearchPage />} />
+          <Route path="/user/:username" element={<UserPage />} />
+          <Route path="/starred" element={<StarredPage />} />
+        </Routes>
+      </div>
+    </Router>
+  );
 }
 
-export default App
-
+export default App;
