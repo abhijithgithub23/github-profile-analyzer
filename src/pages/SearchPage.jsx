@@ -33,6 +33,12 @@ export default function SearchPage() {
     }
   };
 
+  // NEW: Function to handle clearing the search and results
+  const handleClear = () => {
+    setLocalQuery('');
+    dispatch(clearSearch());
+  };
+
   return (
     <div className="h-full overflow-y-auto custom-scrollbar bg-gray-950 text-gray-200 pt-20 px-4 selection:bg-blue-500/30 relative">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
@@ -50,20 +56,36 @@ export default function SearchPage() {
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative group">
           <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
           
-          <div className="relative flex flex-col sm:flex-row gap-3 bg-gray-950 p-2 rounded-2xl border border-gray-800 shadow-2xl">
+          <div className="relative flex flex-col sm:flex-row items-center gap-3 bg-gray-950 p-2 rounded-2xl border border-gray-800 shadow-2xl">
             <input
               type="text"
               value={localQuery}
               onChange={(e) => setLocalQuery(e.target.value)}
-              placeholder="Target ID (e.g., 'torvalds')..."
-              className="flex-1 bg-transparent px-5 py-4 focus:outline-none text-white text-lg placeholder-gray-600 font-mono"
+              placeholder="Type a Github Username..."
+              className="flex-1 w-full bg-transparent px-5 py-4 focus:outline-none text-white text-lg placeholder-gray-600 font-mono"
             />
+            
+            {/* NEW: Conditional Clear Button */}
+            {localQuery && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="p-2 text-gray-500 hover:text-white transition-colors duration-200 focus:outline-none"
+                aria-label="Clear search"
+                title="Clear search"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+
             <button 
               type="submit"
-              disabled={loading || fallbackLoading}
-              className="px-8 py-4 bg-white text-gray-950 rounded-xl font-black uppercase tracking-wider hover:bg-gray-200 disabled:opacity-50 disabled:bg-gray-800 disabled:text-gray-500 transition shadow-[0_0_15px_rgba(255,255,255,0.2)] hover:shadow-[0_0_25px_rgba(255,255,255,0.4)]"
+              disabled={loading || fallbackLoading || !localQuery.trim()}
+              className="w-full sm:w-auto px-8 py-4 bg-white text-gray-950 rounded-xl font-black uppercase tracking-wider hover:bg-gray-200 disabled:opacity-50 disabled:bg-gray-800 disabled:text-gray-500 transition shadow-[0_0_15px_rgba(255,255,255,0.2)] hover:shadow-[0_0_25px_rgba(255,255,255,0.4)]"
             >
-              {loading || fallbackLoading ? 'Scanning...' : 'Extract'}
+              {loading || fallbackLoading ? 'Scanning...' : 'SEARCH'}
             </button>
           </div>
         </form>
