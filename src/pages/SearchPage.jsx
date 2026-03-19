@@ -4,8 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { searchUsersThunk, clearSearch } from '../features/search/searchSlice';
 import { githubAPI } from '../features/github/githubAPI';
 
+// NEW: Module-level variable to hold the query string even when the component unmounts
+let persistedQuery = '';
+
 export default function SearchPage() {
-  const [localQuery, setLocalQuery] = useState('');
+  // Initialize localQuery with the persisted value so it repopulates on return
+  const [localQuery, setLocalQuery] = useState(persistedQuery);
   const [fallbackLoading, setFallbackLoading] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -33,10 +37,23 @@ export default function SearchPage() {
     }
   };
 
-  // NEW: Function to handle clearing the search and results
+  // UPDATED: Wipe both local state and the module-level variable
   const handleClear = () => {
     setLocalQuery('');
+    persistedQuery = ''; 
     dispatch(clearSearch());
+  };
+
+  // UPDATED: Sync the input with both local state and our persisted variable
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setLocalQuery(value);
+    persistedQuery = value; 
+    
+    // If the input is completely empty, immediately wipe the suggestions
+    if (!value.trim()) {
+      dispatch(clearSearch());
+    }
   };
 
   return (
@@ -60,13 +77,13 @@ export default function SearchPage() {
             <input
               type="text"
               value={localQuery}
-              onChange={(e) => setLocalQuery(e.target.value)}
+              onChange={handleInputChange}
               placeholder="Type a Github Username..."
               className="flex-1 w-full bg-transparent px-5 py-4 focus:outline-none text-white text-lg placeholder-gray-600 font-mono"
             />
             
-            {/* NEW: Conditional Clear Button */}
-            {localQuery && (
+            {/* Show clear button if there is text OR if suggestions are lingering */}
+            {(localQuery || suggestions.length > 0) && (
               <button
                 type="button"
                 onClick={handleClear}
