@@ -3,10 +3,10 @@ import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearGithubData } from '../features/github/githubSlice';
 import { fetchGithubData } from '../features/github/githubThunks';
-import { selectAllRepos, selectDeveloperInsights } from '../features/github/githubSelectors';
+import {  selectDeveloperInsights } from '../features/github/githubSelectors';
 import { toggleStar } from '../features/starred/starredSlice';
 import { toggleCompare } from '../features/comparison/comparisonSlice';
-import { getFilteredRepos } from '../utils/helpers';
+// import { getFilteredRepos } from '../utils/helpers';
 
 // --- CLEAN DROPDOWN COMPONENT ---
 const CustomSelect = ({ value, options, onChange, label }) => {
