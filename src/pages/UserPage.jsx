@@ -6,9 +6,7 @@ import { fetchGithubData } from '../features/github/githubThunks';
 import {  selectDeveloperInsights } from '../features/github/githubSelectors';
 import { toggleStar } from '../features/starred/starredSlice';
 import { toggleCompare } from '../features/comparison/comparisonSlice';
-// import { getFilteredRepos } from '../utils/helpers';
 
-// --- CLEAN DROPDOWN COMPONENT ---
 const CustomSelect = ({ value, options, onChange, label }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef(null);
@@ -62,7 +60,6 @@ export default function UserPage() {
   const { user, loading, error } = useSelector(state => state.github);
   const insights = useSelector(selectDeveloperInsights);
   
-  // Cross-slice state checks
   const isStarred = useSelector(state => state.starred.starredUsers.some(u => u.login === username));
   const isQueued = useSelector(state => state.comparison.queue.includes(username));
 
@@ -72,15 +69,14 @@ export default function UserPage() {
   }, [username, dispatch]);
 
   if (loading || !insights) return (
-    <div className="flex justify-center items-center h-[80vh] bg-gray-950 text-sm text-gray-500">
+    <div className="h-full flex justify-center items-center bg-gray-950 text-sm text-gray-500">
       <span className="animate-spin mr-2">⟳</span> Running algorithmic profile audit...
     </div>
   );
   
-  if (error) return <div className="text-center mt-20 text-red-400 bg-red-900/10 p-4 rounded-lg border border-red-900/30 max-w-lg mx-auto">{error}</div>;
+  if (error) return <div className="h-full flex justify-center items-center bg-gray-950"><div className="text-center text-red-400 bg-red-900/10 p-4 rounded-lg border border-red-900/30 max-w-lg mx-auto">{error}</div></div>;
   if (!user) return null;
 
-  // Derive languages for filter dynamically from scored repos
   const uniqueLangs = [...new Set(insights.scoredRepos.map(r => r.language).filter(Boolean))];
   const languageOptions = [
     { value: 'All', label: 'All Languages' },
@@ -93,22 +89,17 @@ export default function UserPage() {
     { value: 'Stars', label: 'Highest Stars' },
   ];
 
-  // Modify filtered repos inline to support the advanced 'Algo' sort
   let displayedRepos = [...insights.scoredRepos];
   if (filterLang !== 'All') displayedRepos = displayedRepos.filter(r => r.language === filterLang);
-  
   if (sortBy === 'Algo') displayedRepos.sort((a, b) => b.algoScore - a.algoScore);
   else if (sortBy === 'Stars') displayedRepos.sort((a, b) => b.stargazers_count - a.stargazers_count);
   else displayedRepos.sort((a, b) => a.daysSincePush - b.daysSincePush);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-300 py-8 font-sans">
-      <div className="max-w-6xl mx-auto px-4 space-y-6">
+    <div className="h-full overflow-y-auto custom-scrollbar bg-gray-950 text-gray-300 py-8 font-sans">
+      <div className="max-w-6xl mx-auto px-4 space-y-6 pb-20">
         
-        {/* TOP LAYER: Identity & Executive Summary */}
         <div className="flex flex-col lg:flex-row gap-6">
-          
-          {/* Identity Card */}
           <div className="w-full lg:w-1/4 bg-gray-900 border border-gray-800 rounded-xl p-6 flex flex-col items-center text-center">
             <img src={user.avatar_url} alt={user.login} className="w-24 h-24 rounded-full border border-gray-700 mb-4" />
             <h1 className="text-xl font-bold text-white tracking-tight">{user.name || user.login}</h1>
@@ -152,10 +143,7 @@ export default function UserPage() {
             </div>
           </div>
 
-          {/* Audit Data Panel */}
           <div className="flex-1 flex flex-col gap-6">
-            
-            {/* Quick Summary Grid */}
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 grid grid-cols-2 md:grid-cols-4 gap-6">
               <SummaryMetric label="Est. Experience" value={insights.summary.expLevel} sub={`${insights.summary.yearsActive} years active account`} />
               <SummaryMetric label="Core Stack" value={insights.summary.primaryStack} sub="Weighted by repo size & recency" />
@@ -163,7 +151,6 @@ export default function UserPage() {
               <SummaryMetric label="Avg Repo Health" value={`${insights.summary.avgHealth}%`} valueColor={insights.summary.avgHealth > 60 ? 'text-emerald-400' : 'text-yellow-400'} sub="Docs, License, & Recency" />
             </div>
 
-            {/* Auditor Warnings (Red Flags) */}
             <div className={`rounded-xl p-5 border ${insights.redFlags.length > 0 ? 'bg-red-950/20 border-red-900/50' : 'bg-emerald-950/20 border-emerald-900/50'}`}>
               <h3 className={`text-xs font-bold uppercase tracking-wider mb-3 ${insights.redFlags.length > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
                 {insights.redFlags.length > 0 ? '⚠ Audit Warnings & Red Flags' : '✓ Clean Audit'}
@@ -180,13 +167,11 @@ export default function UserPage() {
                 <p className="text-sm text-emerald-200/80">No major maintenance or activity red flags detected. Consistent operational habits.</p>
               )}
             </div>
-
           </div>
         </div>
 
-        {/* ALGORITHMIC TOP 3 PROJECTS */}
         <div>
-          <div className="flex items-end justify-between mb-4">
+          <div className="flex items-end justify-between mb-4 mt-6">
              <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Algorithmic Best Projects</h2>
              <span className="text-xs text-gray-600">Scored via Stars + Forks + Size + Health + Recency</span>
           </div>
@@ -217,14 +202,11 @@ export default function UserPage() {
           </div>
         </div>
 
-        {/* FULL REPOSITORY AUDIT TABLE */}
         <div className="pt-6">
           <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Complete Codebase Audit</h2>
-
           <div className="flex flex-col lg:flex-row gap-6 items-start">
             
-            {/* Filter Sidebar */}
-            <div className="w-full lg:w-64 shrink-0 bg-gray-900 border border-gray-800 rounded-xl p-5 sticky top-24">
+            <div className="w-full lg:w-64 shrink-0 bg-gray-900 border border-gray-800 rounded-xl p-5 sticky top-4">
               <h3 className="text-xs font-semibold text-gray-500 mb-4 uppercase">Table Controls</h3>
               <div className="space-y-5">
                 <CustomSelect label="Sort Logic" value={sortBy} options={sortOptions} onChange={setSortBy} />
@@ -232,7 +214,6 @@ export default function UserPage() {
               </div>
             </div>
 
-            {/* Audit Table */}
             <div className="flex-1 bg-gray-900 border border-gray-800 rounded-xl overflow-hidden w-full">
               <div className="hidden md:grid grid-cols-12 gap-4 p-4 border-b border-gray-800 text-[10px] font-bold text-gray-500 uppercase tracking-wider bg-gray-950/50">
                 <div className="col-span-4">Repository</div>
@@ -275,13 +256,11 @@ export default function UserPage() {
 
           </div>
         </div>
-
       </div>
     </div>
   );
 }
 
-// Sub-components
 const SummaryMetric = ({ label, value, sub, valueColor = "text-gray-100" }) => (
   <div className="flex flex-col">
     <span className="text-[10px] text-gray-500 uppercase tracking-wider mb-1 font-bold">{label}</span>

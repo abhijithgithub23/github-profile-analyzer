@@ -2,17 +2,17 @@ import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toggleStar } from '../features/starred/starredSlice';
-import { toggleCompare } from '../features/comparison/comparisonSlice'; // 🟢 NEW IMPORT
+import { toggleCompare } from '../features/comparison/comparisonSlice'; 
 
 export default function StarredPage() {
   const starredUsers = useSelector(state => state.starred.starredUsers);
-  const comparisonQueue = useSelector(state => state.comparison.queue); // 🟢 NEW STATE
+  const comparisonQueue = useSelector(state => state.comparison.queue); 
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-200 py-10 selection:bg-blue-500/30">
-      <div className="max-w-7xl mx-auto px-4">
+    <div className="h-full overflow-y-auto custom-scrollbar bg-gray-950 text-gray-200 py-10 selection:bg-blue-500/30">
+      <div className="max-w-7xl mx-auto px-4 pb-20">
         
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 border-b border-gray-800 pb-6">
           <div>
@@ -38,11 +38,10 @@ export default function StarredPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {starredUsers.map(user => {
-              const isQueued = comparisonQueue.includes(user.login); // 🟢 Check if queued
+              const isQueued = comparisonQueue.includes(user.login);
 
               return (
                 <div key={user.login} className="bg-gray-900/50 backdrop-blur-md p-6 rounded-3xl border border-gray-800 text-center flex flex-col relative group hover:border-blue-500/30 transition duration-300">
-                  {/* Ambient glow on hover */}
                   <div className="absolute inset-0 bg-blue-500/0 group-hover:bg-blue-500/5 rounded-3xl transition duration-500 pointer-events-none"></div>
 
                   <img 
@@ -55,7 +54,6 @@ export default function StarredPage() {
                   <p className="text-xs font-mono text-gray-500 mb-6 truncate">@{user.login}</p>
                   
                   <div className="mt-auto flex flex-col gap-2 relative z-10">
-                    {/* Primary Action */}
                     <button 
                       onClick={() => navigate(`/user/${user.login}`)}
                       className="w-full bg-white/5 border border-white/10 text-white py-2 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-white hover:text-gray-950 hover:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition duration-300"
@@ -63,7 +61,6 @@ export default function StarredPage() {
                       Analyze
                     </button>
                     
-                    {/* Secondary Actions Row */}
                     <div className="flex gap-2">
                       <button 
                         onClick={() => dispatch(toggleCompare(user.login))}

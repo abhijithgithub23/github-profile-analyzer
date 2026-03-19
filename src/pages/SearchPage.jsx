@@ -34,11 +34,10 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-200 pt-20 px-4 selection:bg-blue-500/30 relative overflow-hidden">
-      {/* Ambient Glow */}
+    <div className="h-full overflow-y-auto custom-scrollbar bg-gray-950 text-gray-200 pt-20 px-4 selection:bg-blue-500/30 relative">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-      <div className="max-w-4xl mx-auto relative z-10">
+      <div className="max-w-4xl mx-auto relative z-10 pb-20">
         <div className="text-center mb-12">
           <h1 className="text-5xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-gray-500 mb-6 tracking-tight">
             Developer <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400">Telemetry</span>
@@ -49,7 +48,6 @@ export default function SearchPage() {
         </div>
 
         <form onSubmit={handleSearch} className="max-w-2xl mx-auto relative group">
-          {/* Glowing border effect on search box */}
           <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
           
           <div className="relative flex flex-col sm:flex-row gap-3 bg-gray-950 p-2 rounded-2xl border border-gray-800 shadow-2xl">

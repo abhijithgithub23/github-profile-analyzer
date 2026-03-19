@@ -9,15 +9,19 @@ import ComparisonPage from './pages/ComparisonPage';
 function App() {
   return (
     <Router>
-      {/* 🟢 Ensure bg-gray-950 is on the wrapper to prevent white flashes */}
-      <div className="min-h-screen bg-gray-950"> 
+      {/* Locked screen height, no scrolling here */}
+      <div className="h-screen w-full flex flex-col bg-gray-950 overflow-hidden"> 
         <Navbar />
-        <Routes>
-          <Route path="/" element={<SearchPage />} />
-          <Route path="/user/:username" element={<UserPage />} />
-          <Route path="/starred" element={<StarredPage />} />
-          <Route path="/compare" element={<ComparisonPage />} /> {/* 🟢 ADD THIS */}
-        </Routes>
+        
+        {/* Strict boundary for the pages. The pages inside will handle the scroll. */}
+        <div className="flex-1 overflow-hidden">
+          <Routes>
+            <Route path="/" element={<SearchPage />} />
+            <Route path="/user/:username" element={<UserPage />} />
+            <Route path="/starred" element={<StarredPage />} />
+            <Route path="/compare" element={<ComparisonPage />} />
+          </Routes>
+        </div>
       </div>
     </Router>
   );
