@@ -4,13 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import { searchUsersThunk, clearSearch } from '../features/search/searchSlice';
 import { githubAPI } from '../features/github/githubAPI';
 
-// NEW: Module-level variable 
+// Module-level variable 
 let persistedQuery = '';
 
 export default function SearchPage() {
   // Initialize localQuery with the persisted value so it repopulates on return
   const [localQuery, setLocalQuery] = useState(persistedQuery);
-  const [fallbackLoading, setFallbackLoading] = useState(false); //for local api call
+  const [fallbackLoading, setFallbackLoading] = useState(false);
+  const [fallbackResult, setFallbackResult] = useState(null); 
+  
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { suggestions, loading, error, rateLimitExceeded } = useSelector(state => state.search);
@@ -20,12 +22,15 @@ export default function SearchPage() {
     if (!localQuery.trim()) return;
 
     dispatch(clearSearch());
+    setFallbackResult(null); 
 
     if (rateLimitExceeded) {
       setFallbackLoading(true);
       try {
         const exactMatch = await githubAPI.getUser(localQuery);
-        if (exactMatch.status === 200) navigate(`/user/${localQuery}`); //local api call
+        if (exactMatch.status === 200) {
+          setFallbackResult([exactMatch.data]); 
+        }
       } catch (err) {
         console.log("Error:", err);
         alert("Search limit reached and exact user not found.");
@@ -37,24 +42,25 @@ export default function SearchPage() {
     }
   };
 
-  // UPDATED: Wipe both local state and the module-level variable
   const handleClear = () => {
     setLocalQuery('');
     persistedQuery = ''; 
+    setFallbackResult(null); 
     dispatch(clearSearch());
   };
 
-  // UPDATED: Sync the input with both local state and our persisted variable
   const handleInputChange = (e) => {
     const value = e.target.value;
     setLocalQuery(value);
     persistedQuery = value; 
     
-    // If the input is completely empty, immediately wipe the suggestions
     if (!value.trim()) {
+      setFallbackResult(null); 
       dispatch(clearSearch());
     }
   };
+
+  const displaySuggestions = fallbackResult && fallbackResult.length > 0 ? fallbackResult : suggestions;
 
   return (
     <div className="h-full overflow-y-auto custom-scrollbar bg-gray-950 text-gray-200 pt-20 px-4 selection:bg-blue-500/30 relative">
@@ -83,7 +89,7 @@ export default function SearchPage() {
             />
             
             {/* Show clear button if there is text OR if suggestions are lingering */}
-            {(localQuery || suggestions.length > 0) && (
+            {(localQuery || displaySuggestions.length > 0) && (
               <button
                 type="button"
                 onClick={handleClear}
@@ -113,15 +119,17 @@ export default function SearchPage() {
           </div>
         )}
 
-        {suggestions.length > 0 && (
+        {displaySuggestions.length > 0 && (
           <div className="mt-16 animate-fade-in">
             <div className="flex items-center gap-4 mb-6">
-              <h3 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em]">Identified Matches</h3>
+              <h3 className="text-xs font-black text-gray-500 uppercase tracking-[0.2em]">
+                {fallbackResult ? "Exact Match (Rate Limit Fallback)" : "Identified Matches"}
+              </h3>
               <div className="h-px bg-gray-800 flex-1"></div>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {suggestions.map(user => (
+              {displaySuggestions.map(user => (
                 <div 
                   key={user.id} 
                   onClick={() => navigate(`/user/${user.login}`)}
