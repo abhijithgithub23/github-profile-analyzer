@@ -28,8 +28,7 @@ export const selectLanguageStats = createSelector(
   }
 );
 
-// 🧠 SINGLE SOURCE OF TRUTH: Master Intelligence Algorithm
-// Used by both the Redux State (User Page) and the Promise.all fetch (Comparison Page)
+
 export const analyzeDeveloperProfile = (user, repos, events) => {
   if (!user) return null;
   const safeRepos = Array.isArray(repos) ? repos : [];
