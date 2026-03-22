@@ -3,7 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 const comparisonSlice = createSlice({
   name: 'comparison',
   initialState: {
-    queue: [], // Will hold max 2 usernames, e.g., ['torvalds', 'gaearon']
+    queue: [], // Will hold max 2 usernames
   },
   reducers: {
     toggleCompare: (state, action) => {

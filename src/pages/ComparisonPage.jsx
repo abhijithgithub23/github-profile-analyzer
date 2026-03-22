@@ -3,8 +3,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toggleCompare, clearCompare } from '../features/comparison/comparisonSlice';
 import { githubAPI } from '../features/github/githubAPI';
+import { analyzeDeveloperProfile } from '../features/github/githubSelectors'; 
 
-// NEW: Module-level cache to store comparison data across component mounts
 const comparisonCache = {};
 
 export default function ComparisonPage() {
@@ -20,11 +20,10 @@ export default function ComparisonPage() {
     const fetchComparisonData = async () => {
       if (queue.length !== 2) return;
 
-      // NEW: Check if we already have the data for this specific pair
       const cacheKey = queue.slice().sort().join('|'); 
       if (comparisonCache[cacheKey]) {
         setData(comparisonCache[cacheKey]);
-        return; // Exit early, no API call needed!
+        return; 
       }
 
       setLoading(true);
@@ -44,11 +43,10 @@ export default function ComparisonPage() {
         ]);
 
         const analyzedData = {
-          user1: analyzeUser(r1U.data, r1R.data, r1E.data),
-          user2: analyzeUser(r2U.data, r2R.data, r2E.data)
+          user1: analyzeDeveloperProfile(r1U.data, r1R.data, r1E.data),
+          user2: analyzeDeveloperProfile(r2U.data, r2R.data, r2E.data)
         };
 
-        // NEW: Save the result to our cache
         comparisonCache[cacheKey] = analyzedData;
         setData(analyzedData);
 
@@ -62,87 +60,6 @@ export default function ComparisonPage() {
 
     fetchComparisonData();
   }, [queue]);
-
-  const analyzeUser = (user, repos, events) => {
-    const safeRepos = Array.isArray(repos) ? repos : [];
-    const safeEvents = Array.isArray(events) ? events : [];
-
-    const originalRepos = safeRepos.filter(r => !r.fork);
-    const totalStars = safeRepos.reduce((acc, r) => acc + r.stargazers_count, 0);
-    const totalForks = safeRepos.reduce((acc, r) => acc + r.forks_count, 0);
-    const totalWatchers = safeRepos.reduce((acc, r) => acc + r.watchers_count, 0);
-    const totalOpenIssues = safeRepos.reduce((acc, r) => acc + r.open_issues_count, 0);
-    const totalSizeKB = safeRepos.reduce((acc, r) => acc + r.size, 0);
-    const avgRepoSizeMB = originalRepos.length ? (totalSizeKB / originalRepos.length / 1024).toFixed(1) : 0;
-    const yearsActive = new Date().getFullYear() - new Date(user.created_at).getFullYear();
-    
-    let healthTotal = 0;
-    let reposWithIssues = 0;
-    let reposWithWiki = 0;
-
-    originalRepos.forEach(repo => {
-      if (repo.description) healthTotal += 20;
-      if (repo.has_issues) { healthTotal += 10; reposWithIssues++; }
-      if (repo.license) healthTotal += 10;
-      if (repo.has_wiki) reposWithWiki++;
-    });
-    
-    const avgHealth = originalRepos.length ? Math.round(healthTotal / originalRepos.length) : 0;
-    const osScore = safeRepos.length ? Math.round(((reposWithIssues + reposWithWiki) / (safeRepos.length * 2)) * 100) : 0;
-
-    let prCount = 0, issueCount = 0, pushCount = 0, totalCommits = 0;
-    
-    safeEvents.forEach(e => {
-      if (e.type === 'PullRequestEvent') prCount++;
-      if (e.type === 'IssuesEvent') issueCount++;
-      if (e.type === 'PushEvent') {
-        pushCount++;
-        const commitCount = e.payload?.size ?? e.payload?.commits?.length ?? 0;
-        totalCommits += Math.max(1, commitCount); 
-      }
-    });
-    
-    const commitsPerPush = pushCount > 0 ? (totalCommits / pushCount).toFixed(1) : 0;
-
-    const langScores = {};
-    const now = new Date();
-    safeRepos.forEach(repo => {
-      if (repo.language) {
-        const daysSincePush = (now - new Date(repo.pushed_at || repo.updated_at)) / (1000 * 60 * 60 * 24);
-        const recencyWeight = daysSincePush < 90 ? 2 : (daysSincePush < 365 ? 1 : 0.2);
-        langScores[repo.language] = (langScores[repo.language] || 0) + (repo.size * recencyWeight);
-      }
-    });
-    const primaryStack = Object.entries(langScores).sort((a, b) => b[1] - a[1]).slice(0, 2).map(l => l[0]).join(' & ') || 'Unknown';
-
-    return {
-      profile: user,
-      metrics: {
-        followers: user.followers,
-        yearsActive,
-        company: user.company || null,
-        location: user.location || null,
-        hasBlog: user.blog ? 'Yes' : null,
-        hireable: user.hireable !== null ? (user.hireable ? 'Yes' : 'No') : null,
-        publicRepos: user.public_repos,
-        publicGists: user.public_gists,
-        originalRepos: originalRepos.length,
-        totalStars,
-        totalForks,
-        totalWatchers,
-        totalOpenIssues,
-        sizeMB: (totalSizeKB / 1024).toFixed(1),
-        avgRepoSizeMB: Number(avgRepoSizeMB),
-        avgHealth,
-        osScore,
-        totalCommits,
-        prCount,
-        issueCount,
-        commitsPerPush: Number(commitsPerPush),
-        primaryStack
-      }
-    };
-  };
 
   if (queue.length < 2) {
     return (
@@ -239,23 +156,16 @@ const ProfileCard = ({ data, onRemove }) => (
     <h2 className="text-xl font-bold text-white">{data.profile.name || data.profile.login}</h2>
     <p className="text-sm font-mono text-gray-500 mb-4">@{data.profile.login}</p>
     <a 
-  href={data.profile.html_url} 
-  target="_blank" 
-  rel="noreferrer" 
-  className="w-full max-w-[200px] py-2 bg-gray-800 text-xs font-bold rounded-lg text-white hover:bg-gray-700 transition border border-gray-700 flex items-center justify-center gap-2"
->
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="16" 
-    height="16" 
-    fill="currentColor" 
-    viewBox="0 0 24 24"
-    className="opacity-90"
-  >
-    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-  </svg>
-  View Profile
-</a>
+      href={data.profile.html_url} 
+      target="_blank" 
+      rel="noreferrer" 
+      className="w-full max-w-[200px] py-2 bg-gray-800 text-xs font-bold rounded-lg text-white hover:bg-gray-700 transition border border-gray-700 flex items-center justify-center gap-2"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24" className="opacity-90">
+        <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+      </svg>
+      View Profile
+    </a>
   </div>
 );
 

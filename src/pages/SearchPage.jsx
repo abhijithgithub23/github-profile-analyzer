@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { searchUsersThunk, clearSearch } from '../features/search/searchSlice';
 import { githubAPI } from '../features/github/githubAPI';
 
-// NEW: Module-level variable to hold the query string even when the component unmounts
+// NEW: Module-level variable 
 let persistedQuery = '';
 
 export default function SearchPage() {
   // Initialize localQuery with the persisted value so it repopulates on return
   const [localQuery, setLocalQuery] = useState(persistedQuery);
-  const [fallbackLoading, setFallbackLoading] = useState(false);
+  const [fallbackLoading, setFallbackLoading] = useState(false); //for local api call
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { suggestions, loading, error, rateLimitExceeded } = useSelector(state => state.search);
@@ -25,7 +25,7 @@ export default function SearchPage() {
       setFallbackLoading(true);
       try {
         const exactMatch = await githubAPI.getUser(localQuery);
-        if (exactMatch.status === 200) navigate(`/user/${localQuery}`);
+        if (exactMatch.status === 200) navigate(`/user/${localQuery}`); //local api call
       } catch (err) {
         console.log("Error:", err);
         alert("Search limit reached and exact user not found.");

@@ -3,10 +3,11 @@ import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearGithubData } from '../features/github/githubSlice';
 import { fetchGithubData } from '../features/github/githubThunks';
-import { selectDeveloperInsights } from '../features/github/githubSelectors';
+import { selectAllRepos, selectDeveloperInsights, selectLanguageStats } from '../features/github/githubSelectors';
 import { toggleStar } from '../features/starred/starredSlice';
 import { toggleCompare } from '../features/comparison/comparisonSlice';
 
+//Drop down box
 const CustomSelect = ({ value, options, onChange, label }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef(null);
@@ -50,6 +51,7 @@ const CustomSelect = ({ value, options, onChange, label }) => {
   );
 };
 
+//User page
 export default function UserPage() {
   const { username } = useParams();
   const dispatch = useDispatch();
@@ -58,11 +60,14 @@ export default function UserPage() {
   const [filterLang, setFilterLang] = useState('All');
 
   const { user, loading, error } = useSelector(state => state.github);
+  const allRepos = useSelector(selectAllRepos);
   const insights = useSelector(selectDeveloperInsights);
+  const languages = useSelector(selectLanguageStats);
   
   const isStarred = useSelector(state => state.starred.starredUsers.some(u => u.login === username));
   const isQueued = useSelector(state => state.comparison.queue.includes(username));
 
+  //calling user data api
   useEffect(() => {
     dispatch(fetchGithubData(username));
     return () => { dispatch(clearGithubData()); };
@@ -95,6 +100,12 @@ export default function UserPage() {
   else if (sortBy === 'Stars') displayedRepos.sort((a, b) => b.stargazers_count - a.stargazers_count);
   else displayedRepos.sort((a, b) => a.daysSincePush - b.daysSincePush);
 
+  // Derive global impact stats for the new section
+  const totalNetworkStars = allRepos.reduce((acc, r) => acc + r.stargazers_count, 0);
+  const totalNetworkForks = allRepos.reduce((acc, r) => acc + r.forks_count, 0);
+  const totalVolumeMB = Math.round(allRepos.reduce((acc, r) => acc + r.size, 0) / 1024);
+  const avgRepoSizeMB = allRepos.length ? Math.round(totalVolumeMB / allRepos.length) : 0;
+
   return (
     <div className="h-full overflow-y-auto custom-scrollbar bg-gray-950 text-gray-300 py-8 font-sans">
       <div className="max-w-6xl mx-auto px-4 space-y-6 pb-20">
@@ -106,23 +117,16 @@ export default function UserPage() {
             <p className="text-gray-500 text-xs mb-4 font-mono">@{user.login}</p>
             
             <a 
-  href={user.html_url} 
-  target="_blank" 
-  rel="noreferrer" 
-  className="w-full py-2 mb-3 bg-gray-800 hover:bg-gray-700 text-white text-xs font-semibold rounded-lg transition border border-gray-700 flex items-center justify-center gap-2"
->
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="16" 
-    height="16" 
-    fill="currentColor" 
-    viewBox="0 0 24 24"
-    className="opacity-90"
-  >
-    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-  </svg>
-  View on GitHub
-</a>
+              href={user.html_url} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="w-full py-2 mb-3 bg-gray-800 hover:bg-gray-700 text-white text-xs font-semibold rounded-lg transition border border-gray-700 flex items-center justify-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24" className="opacity-90">
+                <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+              View on GitHub
+            </a>
 
             <button 
               onClick={() => dispatch(toggleStar(user))}
@@ -159,6 +163,7 @@ export default function UserPage() {
           </div>
 
           <div className="flex-1 flex flex-col gap-6">
+            {/* Quick Summary Grid */}
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 grid grid-cols-2 md:grid-cols-4 gap-6">
               <SummaryMetric label="Est. Experience" value={insights.summary.expLevel} sub={`${insights.summary.yearsActive} years active account`} />
               <SummaryMetric label="Core Stack" value={insights.summary.primaryStack} sub="Weighted by repo size & recency" />
@@ -166,21 +171,59 @@ export default function UserPage() {
               <SummaryMetric label="Avg Repo Health" value={`${insights.summary.avgHealth}%`} valueColor={insights.summary.avgHealth > 60 ? 'text-emerald-400' : 'text-yellow-400'} sub="Docs, License, & Recency" />
             </div>
 
-            <div className={`rounded-xl p-5 border ${insights.redFlags.length > 0 ? 'bg-red-950/20 border-red-900/50' : 'bg-emerald-950/20 border-emerald-900/50'}`}>
-              <h3 className={`text-xs font-bold uppercase tracking-wider mb-3 ${insights.redFlags.length > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-                {insights.redFlags.length > 0 ? '⚠ Audit Warnings & Red Flags' : '✓ Clean Audit'}
-              </h3>
-              {insights.redFlags.length > 0 ? (
-                <ul className="space-y-2">
-                  {insights.redFlags.map((flag, i) => (
-                    <li key={i} className="text-sm text-red-200/80 flex items-start gap-2">
-                      <span className="mt-0.5 text-red-500">•</span> {flag}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-emerald-200/80">No major maintenance or activity red flags detected. Consistent operational habits.</p>
-              )}
+            {/* 🟢 REPLACED SECTION: Tech Stack & Ecosystem Impact */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Tech Stack Bar */}
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 flex flex-col justify-center">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Tech Stack Architecture</h3>
+                {languages.length > 0 ? (
+                  <>
+                    <div className="w-full h-2 rounded-full flex overflow-hidden mb-4 bg-gray-800">
+                      {languages.slice(0, 4).map((lang, i) => {
+                        const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-yellow-500'];
+                        return <div key={lang.language} style={{ width: `${lang.percentage}%` }} className={`h-full ${colors[i] || 'bg-gray-600'}`}></div>;
+                      })}
+                    </div>
+                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs font-medium text-gray-400">
+                      {languages.slice(0, 4).map((lang, i) => {
+                        const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-purple-500', 'bg-yellow-500'];
+                        return (
+                          <div key={lang.language} className="flex items-center gap-1.5">
+                            <span className={`w-2 h-2 rounded-full ${colors[i] || 'bg-gray-600'}`}></span>
+                            {lang.language} ({lang.percentage}%)
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-gray-500">No language data available.</p>
+                )}
+              </div>
+
+              {/* Ecosystem Impact Metrics */}
+              <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 flex flex-col justify-center">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Network Stars</p>
+                    <p className="text-2xl font-bold text-white">{totalNetworkStars}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Network Forks</p>
+                    <p className="text-2xl font-bold text-white">{totalNetworkForks}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Total Volume</p>
+                    <p className="text-2xl font-bold text-white">{totalVolumeMB} <span className="text-xs font-normal text-gray-500">MB</span></p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Avg Repo Size</p>
+                    <p className="text-2xl font-bold text-white">{avgRepoSizeMB} <span className="text-xs font-normal text-gray-500">MB</span></p>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -217,11 +260,9 @@ export default function UserPage() {
           </div>
         </div>
 
-        {/* UPDATED: Complete Codebase Audit Wrapper */}
         <div className="pt-6">
           <div className="flex flex-col lg:flex-row gap-6 items-start">
             
-            {/* NEW: Left Sticky Column wrapping both Heading and Controls */}
             <div className="w-full lg:w-64 shrink-0 sticky top-4">
               <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Complete Codebase Audit</h2>
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
