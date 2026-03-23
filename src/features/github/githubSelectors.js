@@ -18,7 +18,7 @@ export const selectLanguageStats = createSelector(
       return acc;
     }, {});
     
-    const totalWithLanguage = Object.values(counts).reduce((a, b) => a + b, 0);
+    const totalWithLanguage = Object.values(counts).reduce((sum, langcount) => sum + langcount, 0);
     return Object.entries(counts)
       .map(([lang, count]) => ({
         language: lang,
@@ -107,25 +107,19 @@ export const analyzeDeveloperProfile = (user, repos, events) => {
   if (prCount > pushCount / 2) { collabSignal = "Highly Collaborative (Team Player)"; collabColor = "text-emerald-400"; }
   else if (prCount > pushCount / 10) { collabSignal = "Active Collaborator"; collabColor = "text-blue-400"; }
 
-  // --- 3. AUDIT RED FLAGS & CONSISTENCY ---
-  const redFlags = [];
-  const minDaysSincePush = scoredRepos.length ? Math.min(...scoredRepos.map(r => r.daysSincePush)) : 999;
-  
-  if (minDaysSincePush > 365) redFlags.push("Critical: Completely inactive. No code pushed in over a year.");
-  else if (minDaysSincePush > 180) redFlags.push("Warning: Severe activity gap. Inactive for 6+ months.");
-  if (avgHealth < 40 && scoredRepos.length > 5) redFlags.push("Risk: Poor documentation and maintenance habits (Avg Health < 40%).");
-  if (scoredRepos.filter(r => r.fork).length > originalRepos.length) redFlags.push("Context: Heavy reliance on forked repositories (low original output).");
-  if (originalRepos.length > 20 && totalStars === 0) redFlags.push("Context: High volume of code pushed, but zero community impact (0 stars).");
+  let expLevel = "Beginner";
 
-  let expLevel = "Junior / Entry";
-  if (yearsActive >= 5) expLevel = "Senior / Veteran";
-  else if (yearsActive >= 2) expLevel = "Mid-Level";
+  if (yearsActive >= 10) expLevel = "Expert / Veteran";
+  else if (yearsActive >= 7) expLevel = "Lead / Principal";
+  else if (yearsActive >= 5) expLevel = "Senior";
+  else if (yearsActive >= 3) expLevel = "Mid-Level";
+  else if (yearsActive >= 1) expLevel = "Junior";
+  else expLevel = "Newbie";
 
   // --- 4. UNIFIED RETURN OBJECT ---
   return {
     profile: user, // Used heavily by ComparisonPage
     summary: { expLevel, primaryStack, collabSignal, collabColor, yearsActive, avgHealth },
-    redFlags,
     topProjects,
     scoredRepos,
     metrics: { // Used by ComparisonPage's detailed breakdown
