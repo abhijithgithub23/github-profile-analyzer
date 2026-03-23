@@ -5,7 +5,6 @@ import { toggleCompare, clearCompare } from '../features/comparison/comparisonSl
 import { githubAPI } from '../features/github/githubAPI';
 import { analyzeDeveloperProfile } from '../features/github/githubSelectors'; 
 
-// const comparisonCache = {};
 
 export default function ComparisonPage() {
   const queue = useSelector(state => state.comparison.queue);
@@ -19,12 +18,6 @@ export default function ComparisonPage() {
   useEffect(() => {
     const fetchComparisonData = async () => {
       if (queue.length !== 2) return;
-
-      // const cacheKey = queue.slice().sort().join('|'); // a | b is same as b | a so avoid api call
-      // if (comparisonCache[cacheKey]) {
-      //   setData(comparisonCache[cacheKey]);
-      //   return; 
-      // }
 
       setLoading(true);
       setError(null);
