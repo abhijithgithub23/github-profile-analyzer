@@ -95,15 +95,19 @@ export default function UserPage() {
   ];
 
   let displayedRepos = [...insights.scoredRepos];
+
+  //lang sort
   if (filterLang !== 'All') displayedRepos = displayedRepos.filter(r => r.language === filterLang);
+
+  //smart - star - recent sort
   if (sortBy === 'Algo') displayedRepos.sort((a, b) => b.algoScore - a.algoScore);
   else if (sortBy === 'Stars') displayedRepos.sort((a, b) => b.stargazers_count - a.stargazers_count);
   else displayedRepos.sort((a, b) => a.daysSincePush - b.daysSincePush);
 
   // Derive global impact stats for the new section
-  const totalNetworkStars = allRepos.reduce((acc, r) => acc + r.stargazers_count, 0);
-  const totalNetworkForks = allRepos.reduce((acc, r) => acc + r.forks_count, 0);
-  const totalVolumeMB = Math.round(allRepos.reduce((acc, r) => acc + r.size, 0) / 1024);
+  const totalNetworkStars = allRepos.reduce((sum, r) => sum + r.stargazers_count, 0);
+  const totalNetworkForks = allRepos.reduce((sum, r) => sum + r.forks_count, 0);
+  const totalVolumeMB = Math.round(allRepos.reduce((sum, r) => sum + r.size, 0) / 1024);
   const avgRepoSizeMB = allRepos.length ? Math.round(totalVolumeMB / allRepos.length) : 0;
 
   return (
@@ -171,7 +175,6 @@ export default function UserPage() {
               <SummaryMetric label="Avg Repo Health" value={`${insights.summary.avgHealth}%`} valueColor={insights.summary.avgHealth > 60 ? 'text-emerald-400' : 'text-yellow-400'} sub="Docs, License, & Recency" />
             </div>
 
-            {/* 🟢 REPLACED SECTION: Tech Stack & Ecosystem Impact */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               {/* Tech Stack Bar */}
@@ -263,7 +266,8 @@ export default function UserPage() {
         <div className="pt-6">
           <div className="flex flex-col lg:flex-row gap-6 items-start">
             
-            <div className="w-full lg:w-64 shrink-0 sticky top-4">
+            {/* FIX APPLIED HERE: Changed to lg:sticky lg:top-4 z-10 */}
+            <div className="w-full lg:w-64 shrink-0 lg:sticky lg:top-4 z-10">
               <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Complete Codebase Audit</h2>
               <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
                 <h3 className="text-xs font-semibold text-gray-500 mb-4 uppercase">Table Controls</h3>
