@@ -12,6 +12,7 @@ export default function SearchPage() {
   const [localQuery, setLocalQuery] = useState(persistedQuery);
   const [fallbackLoading, setFallbackLoading] = useState(false);
   const [fallbackResult, setFallbackResult] = useState(null); 
+  const [hasSearched, setHasSearched] = useState(false); // NEW: Track if a search was executed
   
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ export default function SearchPage() {
 
     dispatch(clearSearch());
     setFallbackResult(null); 
+    setHasSearched(true); // Mark that a search attempt is starting
 
     if (rateLimitExceeded) {
       setFallbackLoading(true);
@@ -33,7 +35,8 @@ export default function SearchPage() {
         }
       } catch (err) {
         console.log("Error:", err);
-        alert("Search limit reached and exact user not found.");
+        // Silently catch the error and set an empty array to trigger the "No user found" UI
+        setFallbackResult([]); 
       } finally {
         setFallbackLoading(false);
       }
@@ -46,6 +49,7 @@ export default function SearchPage() {
     setLocalQuery('');
     persistedQuery = ''; 
     setFallbackResult(null); 
+    setHasSearched(false); // Reset search state
     dispatch(clearSearch());
   };
 
@@ -53,6 +57,7 @@ export default function SearchPage() {
     const value = e.target.value;
     setLocalQuery(value);
     persistedQuery = value; 
+    setHasSearched(false); // Reset search state when user types a new query
     
     if (!value.trim()) {
       setFallbackResult(null); 
@@ -60,7 +65,8 @@ export default function SearchPage() {
     }
   };
 
-  const displaySuggestions = fallbackResult && fallbackResult.length > 0 ? fallbackResult : suggestions;
+  // Ensure we accurately check length. If fallbackResult is an empty array, it means the rate limit fallback found no one.
+  const displaySuggestions = fallbackResult !== null ? fallbackResult : (suggestions || []);
 
   return (
     <div className="h-full overflow-y-auto custom-scrollbar bg-gray-950 text-gray-200 pt-20 px-4 selection:bg-blue-500/30 relative">
@@ -116,6 +122,19 @@ export default function SearchPage() {
         {error && (
           <div className="mt-8 max-w-2xl mx-auto p-4 bg-red-950/30 text-red-400 rounded-xl border border-red-900/50 text-center font-bold tracking-wide">
             ⚠ {error}
+          </div>
+        )}
+
+        {/* Empty State Fallback */}
+        {hasSearched && !loading && !fallbackLoading && !error && displaySuggestions.length === 0 && (
+          <div className="mt-16 animate-fade-in text-center">
+            <div className="inline-block bg-gray-900/40 backdrop-blur-sm p-8 rounded-2xl border border-gray-800">
+
+              <h3 className="text-lg font-bold text-gray-300 mb-5">No matches found</h3>
+              <p className="text-sm text-gray-500">
+                We couldn't find any GitHub user matching "<span className="text-gray-400">{localQuery}</span>"
+              </p>
+            </div>
           </div>
         )}
 
