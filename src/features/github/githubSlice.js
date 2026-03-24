@@ -33,6 +33,8 @@ const githubSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
+      
       .addCase(fetchUser.fulfilled, (state, action) => {
         state.user = action.payload;
       })

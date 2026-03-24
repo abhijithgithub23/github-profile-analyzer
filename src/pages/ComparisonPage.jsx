@@ -5,7 +5,6 @@ import { toggleCompare, clearCompare } from '../features/comparison/comparisonSl
 import { githubAPI } from '../features/github/githubAPI';
 import { analyzeDeveloperProfile } from '../features/github/githubSelectors'; 
 
-
 export default function ComparisonPage() {
   const queue = useSelector(state => state.comparison.queue);
   const dispatch = useDispatch();
@@ -126,13 +125,15 @@ export default function ComparisonPage() {
 
         <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
           <div className="bg-gray-950/50 p-4 text-center text-xs font-bold text-gray-500 uppercase tracking-widest border-b border-gray-800">
-            Recent Operational Habits (Last 90 Days)
+            Activity Profile (Based on Last {user1.metrics.totalEventsTracked} Events)
           </div>
           <div className="divide-y divide-gray-800">
-            <CompareRow label="Recent Commits" u1={user1.metrics.totalCommits} u2={user2.metrics.totalCommits} />
-            <CompareRow label="Avg Commits / Push" u1={user1.metrics.commitsPerPush} u2={user2.metrics.commitsPerPush} />
-            <CompareRow label="PRs Opened/Reviewed" u1={user1.metrics.prCount} u2={user2.metrics.prCount} />
-            <CompareRow label="Issues Interacted" u1={user1.metrics.issueCount} u2={user2.metrics.issueCount} />
+            {/* Lower velocityDays is better (faster coder) */}
+            <CompareRow label="Days to Generate Events" u1={user1.metrics.velocityDays} u2={user2.metrics.velocityDays} suffix=" days" />
+            {/* <CompareRow label="Avg Commits per Push" u1={user1.metrics.avgCommitsPerPush} u2={user2.metrics.avgCommitsPerPush} /> */}
+            <CompareRow label="% Time Pushing Code" u1={user1.metrics.codePercent} u2={user2.metrics.codePercent} suffix="%" />
+            <CompareRow label="% Time Reviewing PRs" u1={user1.metrics.reviewPercent} u2={user2.metrics.reviewPercent} suffix="%" />
+            <CompareRow label="% Time on Issues" u1={user1.metrics.issuePercent} u2={user2.metrics.issuePercent} suffix="%" />
           </div>
         </div>
 

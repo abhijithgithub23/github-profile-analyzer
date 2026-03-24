@@ -28,7 +28,6 @@ export const selectLanguageStats = createSelector(
   }
 );
 
-
 export const analyzeDeveloperProfile = (user, repos, events) => {
   if (!user) return null;
   const safeRepos = Array.isArray(repos) ? repos : [];
@@ -42,7 +41,7 @@ export const analyzeDeveloperProfile = (user, repos, events) => {
   const totalOpenIssues = safeRepos.reduce((acc, r) => acc + r.open_issues_count, 0);
   const totalSizeKB = safeRepos.reduce((acc, r) => acc + r.size, 0);
   const avgRepoSizeMB = originalRepos.length ? (totalSizeKB / originalRepos.length / 1024).toFixed(1) : 0;
-  const yearsActive = new Date().getFullYear() - new Date(user.created_at).getFullYear();
+  const yearsActive = now.getFullYear() - new Date(user.created_at).getFullYear();
 
   // --- 1. REPO HEALTH, OS SCORE & TOP PROJECTS ---
   let healthTotal = 0;
@@ -85,30 +84,61 @@ export const analyzeDeveloperProfile = (user, repos, events) => {
   const avgHealth = scoredRepos.length ? Math.round(healthTotal / scoredRepos.length) : 0;
   const osScore = safeRepos.length ? Math.round(((reposWithIssues + reposWithWiki) / (safeRepos.length * 2)) * 100) : 0;
   const topProjects = [...scoredRepos].sort((a, b) => b.algoScore - a.algoScore).slice(0, 3);
-  
   const primaryStack = Object.entries(langScores).sort((a, b) => b[1] - a[1]).slice(0, 2).map(l => l[0]).join(' & ') || 'Unknown';
 
-  // --- 2. COLLABORATION SIGNAL & VELOCITY ---
-  let prCount = 0, issueCount = 0, pushCount = 0, totalCommits = 0;
+  // --- 2. ACTIVITY PROFILE (Based on the fetched events array) ---
+  let pushCount = 0;
+  // let totalCommits = 0;
+  let prInteractions = 0;
+  let issueInteractions = 0;
+  
+  // Calculate Velocity: How many days did it take to generate these events?
+  let velocityDays = 0;
+  if (safeEvents.length > 1) {
+    const newestEvent = new Date(safeEvents[0].created_at);
+    const oldestEvent = new Date(safeEvents[safeEvents.length - 1].created_at);
+    // Add 1 so if they did everything today, it counts as 1 day, not 0 days.
+    velocityDays = Math.max(1, Math.round((newestEvent - oldestEvent) / (1000 * 60 * 60 * 24))) + 1;
+  } else if (safeEvents.length === 1) {
+    velocityDays = 1;
+  }
+
   safeEvents.forEach(e => {
-    if (e.type === 'PullRequestEvent' || e.type === 'PullRequestReviewEvent') prCount++;
-    if (e.type === 'IssuesEvent') issueCount++;
+    // Coding Actions
     if (e.type === 'PushEvent') {
       pushCount++;
-      const commitCount = e.payload?.size ?? e.payload?.commits?.length ?? 0;
-      totalCommits += Math.max(1, commitCount); 
+      // totalCommits += e.payload?.size || 0;
+    }
+    // PR Actions (Routing PR comments correctly)
+    else if (['PullRequestEvent', 'PullRequestReviewEvent', 'PullRequestReviewCommentEvent'].includes(e.type)) {
+      prInteractions++;
+    }
+    // Issue Actions
+    else if (['IssuesEvent', 'IssueCommentEvent'].includes(e.type)) {
+      if (e.payload?.issue?.pull_request) {
+        prInteractions++; 
+      } else {
+        issueInteractions++;
+      }
     }
   });
 
-  const commitsPerPush = pushCount > 0 ? (totalCommits / pushCount).toFixed(1) : 0;
+  // Calculate percentages based strictly on interaction types
+  const actionableEvents = pushCount + prInteractions + issueInteractions;
+  const codePercent = actionableEvents ? Math.round((pushCount / actionableEvents) * 100) : 0;
+  const reviewPercent = actionableEvents ? Math.round((prInteractions / actionableEvents) * 100) : 0;
+  const issuePercent = actionableEvents ? Math.round((issueInteractions / actionableEvents) * 100) : 0;
+  
+  // const avgCommitsPerPush = pushCount > 0 ? (totalCommits / pushCount).toFixed(1) : 0;
+  const totalEventsTracked = safeEvents.length;
 
+  // Collaboration signal
   let collabSignal = "Mostly Solo Developer";
   let collabColor = "text-gray-400";
-  if (prCount > pushCount / 2) { collabSignal = "Highly Collaborative (Team Player)"; collabColor = "text-emerald-400"; }
-  else if (prCount > pushCount / 10) { collabSignal = "Active Collaborator"; collabColor = "text-blue-400"; }
+  if (prInteractions > pushCount / 2) { collabSignal = "Highly Collaborative"; collabColor = "text-emerald-400"; }
+  else if (prInteractions > pushCount / 10) { collabSignal = "Active Collaborator"; collabColor = "text-blue-400"; }
 
   let expLevel = "Beginner";
-
   if (yearsActive >= 10) expLevel = "Expert / Veteran";
   else if (yearsActive >= 7) expLevel = "Lead / Principal";
   else if (yearsActive >= 5) expLevel = "Senior";
@@ -116,13 +146,12 @@ export const analyzeDeveloperProfile = (user, repos, events) => {
   else if (yearsActive >= 1) expLevel = "Junior";
   else expLevel = "Newbie";
 
-  // --- 4. UNIFIED RETURN OBJECT ---
   return {
-    profile: user, // Used heavily by ComparisonPage
+    profile: user, 
     summary: { expLevel, primaryStack, collabSignal, collabColor, yearsActive, avgHealth },
     topProjects,
     scoredRepos,
-    metrics: { // Used by ComparisonPage's detailed breakdown
+    metrics: { 
       followers: user.followers,
       yearsActive,
       company: user.company || null,
@@ -140,16 +169,18 @@ export const analyzeDeveloperProfile = (user, repos, events) => {
       avgRepoSizeMB: Number(avgRepoSizeMB),
       avgHealth,
       osScore,
-      totalCommits,
-      prCount,
-      issueCount,
-      commitsPerPush: Number(commitsPerPush),
-      primaryStack
+      primaryStack,
+      
+      velocityDays,
+      totalEventsTracked,
+      // avgCommitsPerPush: Number(avgCommitsPerPush),
+      codePercent,
+      reviewPercent,
+      issuePercent
     }
   };
 };
 
-// Redux Wrapper for UserPage
 export const selectDeveloperInsights = createSelector(
   [selectUser, selectRepos, selectEvents],
   (user, repos, events) => {
