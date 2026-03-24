@@ -4,10 +4,7 @@ const selectUser = (state) => state.github.user;
 const selectRepos = (state) => state.github.repos;
 const selectEvents = (state) => state.github.events;
 
-export const selectAllRepos = createSelector(
-  [selectRepos],
-  (repos) => repos || []
-);
+export const selectAllRepos = (state) => state.github.repos || [];
 
 export const selectLanguageStats = createSelector(
   [selectRepos],
