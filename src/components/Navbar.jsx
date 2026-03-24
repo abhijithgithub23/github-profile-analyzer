@@ -23,7 +23,8 @@ export default function Navbar() {
             to="/compare" 
             className={`flex items-center gap-2 font-bold text-sm transition px-4 py-2 rounded-xl shadow-inner border ${compareCount === 2 ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' : 'bg-gray-900 border-gray-800 text-gray-400 hover:text-white'}`}
           >
-            <span>⚖️ Compare</span>
+            {/* Wrapped "Compare" in a span that hides below 780px */}
+            <span>⚖️ <span className="max-[780px]:hidden">Compare</span></span>
             <span className="bg-gray-950 border border-gray-700 px-2 py-0.5 rounded-md text-gray-300">{compareCount}/2</span>
           </Link>
 
@@ -31,7 +32,8 @@ export default function Navbar() {
             to="/starred" 
             className="flex items-center gap-2 font-bold text-sm text-gray-400 hover:text-yellow-400 transition bg-gray-900 border border-gray-800 px-4 py-2 rounded-xl shadow-inner hover:border-yellow-500/30 hover:bg-yellow-500/10"
           >
-            <span>★ Tracked</span>
+            {/* Wrapped "Tracked" in a span that hides below 780px */}
+            <span>★ <span className="max-[780px]:hidden">Tracked</span></span>
             <span className="bg-gray-950 border border-gray-700 px-2 py-0.5 rounded-md text-gray-300">{starredCount}</span>
           </Link>
         </div>

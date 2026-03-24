@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/shared/Navbar';
+import Navbar from './components/Navbar';
 import SearchPage from './pages/SearchPage';
 import UserPage from './pages/UserPage';
 import StarredPage from './pages/StarredPage';
