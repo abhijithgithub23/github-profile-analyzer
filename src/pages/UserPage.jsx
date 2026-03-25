@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { clearGithubData } from '../features/github/githubSlice';
-import { fetchGithubData } from '../features/github/githubThunks';
-import { selectAllRepos, selectDeveloperInsights, selectLanguageStats } from '../features/github/githubSelectors';
-import { toggleStar } from '../features/starred/starredSlice';
-import { toggleCompare } from '../features/comparison/comparisonSlice';
+import { clearGithubData } from '../redux/features/github/githubSlice';
+import { fetchGithubData } from '../redux/features/github/githubThunks';
+import { selectAllRepos, selectDeveloperInsights, selectLanguageStats } from '../redux/features/github/githubSelectors';
+import { toggleStar } from '../redux/features/starred/starredSlice';
+import { toggleCompare } from '../redux/features/comparison/comparisonSlice';
 
 //Drop down box
 const CustomSelect = ({ value, options, onChange, label }) => {

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { toggleCompare, clearCompare } from '../features/comparison/comparisonSlice';
-import { githubAPI } from '../features/github/githubAPI';
-import { analyzeDeveloperProfile } from '../features/github/githubSelectors'; 
+import { toggleCompare, clearCompare } from '../redux/features/comparison/comparisonSlice';
+import { githubAPI } from '../redux/features/github/githubAPI';
+import { analyzeDeveloperProfile } from '../redux/features/github/githubSelectors'; 
 
 export default function ComparisonPage() {
   const queue = useSelector(state => state.comparison.queue);

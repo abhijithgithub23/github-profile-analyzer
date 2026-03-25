@@ -1,8 +1,8 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { toggleStar } from '../features/starred/starredSlice';
-import { toggleCompare } from '../features/comparison/comparisonSlice'; 
+import { toggleStar } from '../redux/features/starred/starredSlice';
+import { toggleCompare } from '../redux/features/comparison/comparisonSlice'; 
 
 export default function StarredPage() {
   const starredUsers = useSelector(state => state.starred.starredUsers);

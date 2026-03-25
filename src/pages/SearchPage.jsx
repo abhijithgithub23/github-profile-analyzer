@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { searchUsersThunk, clearSearch } from '../features/search/searchSlice';
-import { githubAPI } from '../features/github/githubAPI';
+import { searchUsersThunk, clearSearch } from '../redux/features/search/searchSlice';
+import { githubAPI } from '../redux/features/github/githubAPI';
 
 // Module-level variable 
 let persistedQuery = '';
